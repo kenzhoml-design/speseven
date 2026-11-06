@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=2a8ce534-9556-49a3-b180-4ac2adb5b83a
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>7AMBISIUS - Jadwal Pelajaran</title>
+  
+  <!-- Font Google Share Tech Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <style>
+    /* Reset & Proteksi Anti-Copy / Anti-Select */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      -webkit-touch-callout: none;
+      outline: none;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden; /* Sembunyikan scrollbar utama browser secara penuh */
+      font-family: 'Share Tech Mono', monospace;
+      background-color: #000000;
+      color: #ffffff;
+      touch-action: none; /* Mencegah overscroll bawaan browser agar fisika custom berjalan sempurna */
+    }
+
+    /* Background Layar Utama */
+    .app-viewport {
+      width: 100%;
+      height: 100%;
+      background: url('https://i.postimg.cc/Bn7bvXtm/file-0000000026e4821198ed98d28e3f84b3.png') no-repeat center center / cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Container Jadwal Normal (Scrollable dengan efek mantul elastis) */
+    .scroll-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      will-change: transform;
+      cursor: grab;
+    }
+    .scroll-wrapper:active {
+      cursor: grabbing;
+    }
+
+    /* ============================================================ */
+    /* KEYFRAMES ANIMASI MASUK AWAL                                */
+    /* ============================================================ */
+
+    @keyframes bounceInDown {
+      0% {
+        opacity: 0;
+        transform: translateY(-200px) scale(0.7);
+      }
+      60% {
+        opacity: 1;
+        transform: translateY(20px) scale(1.08);
+      }
+      80% {
+        transform: translateY(-8px) scale(0.96);
+      }
+      100% {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes bounceElasticIn {
+      0% {
+        opacity: 0;
+        transform: translateY(120px) scale(0.6) rotate(-2deg);
+      }
+      55% {
+        opacity: 1;
+        transform: translateY(-18px) scale(1.05) rotate(1deg);
+      }
+      75% {
+        transform: translateY(8px) scale(0.97);
+      }
+      90% {
+        transform: translateY(-3px) scale(1.01);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+      }
+    }
+
+    @keyframes warningBouncePop {
+      0% {
+        opacity: 0;
+        transform: scale(0.3) translateY(50px);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.12) translateY(-10px);
+      }
+      70% {
+        transform: scale(0.92) translateY(5px);
+      }
+      85% {
+        transform: scale(1.03) translateY(-2px);
+      }
+      100% {
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    @keyframes subtleGlowPulse {
+      0%, 100% {
+        box-shadow: 0 0 12px rgba(255, 0, 0, 0.3);
+        border-color: #ff0000;
+      }
+      50% {
+        box-shadow: 0 0 22px rgba(255, 0, 0, 0.7);
+        border-color: #ff3333;
+      }
+    }
+
+    /* ============================================================ */
+    /* ELEMEN VISUAL & STYLING CARD                                 */
+    /* ============================================================ */
+
+    /* Judul Header */
+    .header-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 22px;
+      text-transform: uppercase;
+      width: 100%;
+      max-width: 400px;
+      text-align: left;
+      text-shadow: 0 0 12px rgba(0, 0, 0, 0.9);
+      animation: bounceInDown 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+      flex-shrink: 0;
+    }
+    .header-title .white-text { color: #ffffff; }
+    .header-title .red-text { color: #ff0000; }
+
+    /* Kartu Hari */
+    .card-day {
+      width: 100%;
+      max-width: 400px;
+      background: rgba(0, 0, 0, 0.86);
+      border: 1.8px solid #ff0000;
+      border-radius: 18px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 12px rgba(255, 0, 0, 0.3);
+      flex-shrink: 0;
+      transition: box-shadow 0.25s ease;
+      
+      animation: bounceElasticIn 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    /* Staggered Delay */
+    .card-day:nth-child(2) { animation-delay: 0.15s; }
+    .card-day:nth-child(3) { animation-delay: 0.30s; }
+    .card-day:nth-child(4) { animation-delay: 0.45s; }
+    .card-day:nth-child(5) { animation-delay: 0.60s; }
+    .card-day:nth-child(6) { animation-delay: 0.75s; }
+
+    .card-day:hover {
+      box-shadow: 0 10px 25px rgba(255, 0, 0, 0.6);
+    }
+
+    /* Nama Hari */
+    .day-name {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding-bottom: 8px;
+      border-bottom: 1.8px solid #ff0000;
+      margin-bottom: 14px;
+    }
+
+    /* Daftar Mata Pelajaran */
+    .subject-list {
+      list-style: none;
+    }
+    .subject-list li {
+      color: #e2e2e2;
+      font-size: 15px;
+      letter-spacing: 1.2px;
+      line-height: 1.65;
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .subject-list li::before {
+      content: "▪";
+      color: #e2e2e2;
+      font-size: 12px;
+      margin-right: 12px;
+      line-height: 1.65;
+    }
+
+    /* Footer Credits */
+    .footer-credits {
+      text-align: center;
+      margin-top: 10px;
+      margin-bottom: 30px;
+      color: #ff0000;
+      font-size: 17px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      line-height: 1.4;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      animation: bounceElasticIn 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.9s both;
+    }
+
+    /* ============================================================ */
+    /* TAMPILAN DARURAT (WARNING CARD CONTROLLED BY TELEGRAM BOT)   */
+    /* ============================================================ */
+
+    .emergency-screen {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+    }
+
+    .warning-box {
+      width: 100%;
+      max-width: 400px;
+      background: rgba(0, 0, 0, 0.92);
+      border: 2px solid #ff0000;
+      border-radius: 18px;
+      padding: 28px 24px;
+      animation: warningBouncePop 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) both, subtleGlowPulse 2.5s infinite ease-in-out;
+    }
+
+    .warning-header {
+      color: #ff0000;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #ff0000;
+      margin-bottom: 22px;
+      text-align: left;
+    }
+
+    .warning-body {
+      color: #ffffff;
+      font-size: 17px;
+      line-height: 1.6;
+      letter-spacing: 1.2px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body oncontextmenu="return false;">
+
+  <div class="app-viewport" id="viewport">
+    
+    <!-- HALAMAN JADWAL NORMAL -->
+    <div class="scroll-wrapper" id="scrollContainer">
+      
+      <!-- HEADER TITLE -->
+      <div class="header-title">
+        <span class="white-text">7A</span><span class="red-text">MBISIUS</span>
+      </div>
+
+      <!-- KARTU SENIN -->
+      <div class="card-day">
+        <div class="day-name">SENIN</div>
+        <ul class="subject-list">
+          <li>ILMU PENGETAHUAN SOSIAL</li>
+          <li>PENDIDIKAN PANCASILA</li>
+          <li>PENJASORKES</li>
+          <li>BAHASA INDONESIA</li>
+        </ul>
+      </div>
+
+      <!-- KARTU SELASA -->
+      <div class="card-day">
+        <div class="day-name">SELASA</div>
+        <ul class="subject-list">
+          <li>BAHASA INGGRIS</li>
+          <li>SENI MUSIC</li>
+          <li>BAHASA JAWA</li>
+          <li>MATEMATIKA</li>
+        </ul>
+      </div>
+
+      <!-- KARTU RABU -->
+      <div class="card-day">
+        <div class="day-name">RABU</div>
+        <ul class="subject-list">
+          <li>INFORMATIKA</li>
+          <li>ILMU PENGETAHUAN ALAM</li>
+          <li>BAHASA INDONESIA</li>
+          <li>MATEMATIKA</li>
+        </ul>
+      </div>
+
+      <!-- KARTU KAMIS -->
+      <div class="card-day">
+        <div class="day-name">KAMIS</div>
+        <ul class="subject-list">
+          <li>BIMBINGAN KONSELING</li>
+          <li>ILMU PENGETAHUAN ALAM</li>
+          <li>PENDIDIKAN AGAMA ISLAM</li>
+          <li>ILMU PENGETAHUAN SOSIAL</li>
+        </ul>
+      </div>
+
+      <!-- KARTU JUMAT -->
+      <div class="card-day">
+        <div class="day-name">JUMAT</div>
+        <ul class="subject-list">
+          <li>BAHASA INDONESIA</li>
+          <li>BAHASA INGGRIS</li>
+        </ul>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer-credits">
+        CREATOR : KENZ<br>
+        FOUNDER
+      </div>
+
+    </div>
+
+    <!-- TAMPILAN DARURAT (WARNING CARD) -->
+    <div class="emergency-screen" id="emergencyOverlay">
+      <div class="warning-box">
+        <div class="warning-header">WARNING</div>
+        <div class="warning-body">
+          WEBSITE KELAS SEDANG DI MATIKAN OLEH ADMIN TUNGGU HINGGA PENINJAUAN BERAKHIR
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JAVASCRIPT & EFEK SPRINGS MANTUL SCROLL -->
+  <script>
+    const BOT_TOKEN = "8691197729:AAEsLCtu-WffBItWmE2xZCodCSkVlTbbpJM";
+    const OWNER_ID = "8082940444";
+    
+    let offset = 0;
+    const viewport = document.getElementById('viewport');
+    const scrollContainer = document.getElementById('scrollContainer');
+    const emergencyOverlay = document.getElementById('emergencyOverlay');
+
+    // ============================================================ //
+    // FISIKA RUBBERBAND / SPRING ELASTIC BOUNCE SCROLL SYSTEM       //
+    // ============================================================ //
+
+    let currentY = 0;
+    let targetY = 0;
+    let startY = 0;
+    let isDragging = false;
+    let velocity = 0;
+    let lastDragY = 0;
+    let lastTime = Date.now();
+    let animFrame = null;
+
+    function getMinY() {
+      const vH = viewport.clientHeight;
+      const cH = scrollContainer.scrollHeight;
+      return Math.min(0, vH - cH);
+    }
+
+    function applyRubberband(y) {
+      const minY = getMinY();
+      if (y > 0) {
+        // Tahan saat ditarik melampaui batas atas
+        return Math.pow(y, 0.85);
+      } else if (y < minY) {
+        // Tahan saat ditarik melampaui batas bawah
+        const over = minY - y;
+        return minY - Math.pow(over, 0.85);
+      }
+      return y;
+    }
+
+    function updateTransform() {
+      scrollContainer.style.transform = `translate3d(0, ${currentY}px, 0)`;
+    }
+
+    function physicsLoop() {
+      const minY = getMinY();
+
+      if (!isDragging) {
+        if (targetY > 0) {
+          // Mantul membal kembali ke atas (Overscroll Top)
+          targetY += (0 - targetY) * 0.18;
+          velocity = 0;
+          if (Math.abs(targetY) < 0.5) targetY = 0;
+        } else if (targetY < minY) {
+          // Mantul membal kembali ke bawah (Overscroll Bottom)
+          targetY += (minY - targetY) * 0.18;
+          velocity = 0;
+          if (Math.abs(targetY - minY) < 0.5) targetY = minY;
+        } else if (Math.abs(velocity) > 0.1) {
+          // Inersia saat meluncur bebas
+          targetY += velocity;
+          velocity *= 0.92;
+        } else {
+          velocity = 0;
+        }
+      }
+
+      currentY = applyRubberband(targetY);
+      updateTransform();
+
+      animFrame = requestAnimationFrame(physicsLoop);
+    }
+
+    // Event Handler Touch & Mouse
+    function onPointerDown(e) {
+      isDragging = true;
+      startY = (e.touches ? e.touches[0].clientY : e.clientY) - targetY;
+      lastDragY = e.touches ? e.touches[0].clientY : e.clientY;
+      lastTime = Date.now();
+      velocity = 0;
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const now = Date.now();
+      const dt = Math.max(1, now - lastTime);
+      
+      velocity = (clientY - lastDragY) / dt * 12;
+      lastDragY = clientY;
+      lastTime = now;
+
+      targetY = clientY - startY;
+    }
+
+    function onPointerEnd() {
+      isDragging = false;
+    }
+
+    // Mouse Wheel Scroll dengan Efek Bounce
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      targetY -= e.deltaY * 0.9;
+    }, { passive: false });
+
+    // Event Listeners Touch & Mouse
+    viewport.addEventListener('touchstart', onPointerDown, { passive: true });
+    viewport.addEventListener('touchmove', onPointerMove, { passive: true });
+    viewport.addEventListener('touchend', onPointerEnd, { passive: true });
+
+    viewport.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerEnd);
+
+    // Mulai Loop Fisika Bouncing Scroll
+    physicsLoop();
+
+    // ============================================================ //
+    // SECURITY & TELEGRAM BOT CONTROLLER                          //
+    // ============================================================ //
+
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'i')) {
+        e.preventDefault();
+      }
+    });
+
+    function setEmergencyStatus(isEmergency) {
+      if (isEmergency) {
+        scrollContainer.style.display = 'none';
+        emergencyOverlay.style.display = 'flex';
+        localStorage.setItem('sys_status', 'emergency');
+      } else {
+        scrollContainer.style.display = 'flex';
+        emergencyOverlay.style.display = 'none';
+        localStorage.setItem('sys_status', 'normal');
+        targetY = 0; // Reset scroll posisi ke paling atas
+      }
+    }
+
+    if (localStorage.getItem('sys_status') === 'emergency') {
+      setEmergencyStatus(true);
+    }
+
+    async function syncBotState() {
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=10`);
+        const data = await response.json();
+
+        if (data.ok && data.result.length > 0) {
+          data.result.forEach(update => {
+            offset = update.update_id + 1;
+
+            if (update.message && update.message.text) {
+              const senderId = String(update.message.from.id);
+              const command = update.message.text.trim().toLowerCase();
+
+              if (senderId === OWNER_ID) {
+                if (command === '/up') {
+                  setEmergencyStatus(true);
+                  replyTelegram(update.message.chat.id, "🚨 WEBSITE DIMATIKAN: Seluruh jadwal disembunyikan & Mode Warning aktif.");
+                } else if (command === '/ep') {
+                  setEmergencyStatus(false);
+                  replyTelegram(update.message.chat.id, "✅ WEBSITE DINORMALKAN: Seluruh jadwal kembali ditampilkan!");
+                }
+              }
+            }
+          });
+        }
+      } catch (err) {
+      } finally {
+        setTimeout(syncBotState, 1200);
+      }
+    }
+
+    async function replyTelegram(chatId, textMessage) {
+      try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: textMessage
+          })
+        });
+      } catch (e) {}
+    }
+
+    window.onload = function() {
+      syncBotState();
+    };
+  </script>
+</body>
+</html>
+```
+
+### Ringkasan Pembaruan:
+1. **Perhitungan Fisika Elastic Scroll (iOS Rubberband Effect)**: Ketika menggeser (*drag*) halaman jadwal ke atas atau ke bawah melewati batas akhir, kontainer halaman tidak berhenti kaku, melainkan mengikuti geseran dengan tarikan elastis dan langsung **membal/memantul balik** secara lembut (*spring damping*).
+2. **Dukungan Touch & Mouse Drag**: Bekerja mulus baik di layar HP (*touch drag*) maupun di laptop/desktop (*mouse drag* dan *scroll wheel*).
+3. **Kontrol Telegram Bot Tetap Aktif**: Perintah `/up` dan `/ep` tetap bekerja secara *real-time* di latar belakang untuk mengontrol mode darurat.<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="2a8ce534-9556-49a3-b180-4ac2adb5b83a" data-app-host="app.netlify.com" data-account-tier="free"></script>
